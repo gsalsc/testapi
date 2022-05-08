@@ -41,7 +41,7 @@ exports.getUser = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.find({ email: req.body.email });
+    const user = await User.find({ _id: req.body.userid });
     res.status(200).json({
       status: 'success',
       data: { user },

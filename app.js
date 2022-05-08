@@ -1,8 +1,12 @@
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 const tourRouter = require('./routers/tourRouter');
 const userRouter = require('./routers/userRouter');
 const app = express();
+
+app.use(cors());
+app.options('*', cors());
 
 app.use(express.json());
 

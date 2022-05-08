@@ -63,7 +63,6 @@ exports.login = async (req, res, next) => {
 
 exports.protect = async (req, res, next) => {
   try {
-    
     let token;
     if (
       req.headers.authorization &&
@@ -75,9 +74,9 @@ exports.protect = async (req, res, next) => {
     if (!token) {
       throw new Error('not authorized');
     }
-    
-    await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    req.body.userid = decoded.id;
     next();
   } catch (err) {
     res.status(401).json({
