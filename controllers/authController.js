@@ -1,6 +1,7 @@
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+// const sendEmail = require('../services/email');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -13,8 +14,10 @@ exports.signup = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       photo: req.body.photo,
+      role: req.body.role,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
+      passwordChangedAt: req.body.passwordChangedAt,
     });
 
     const token = signToken(newUser._id);
@@ -76,6 +79,20 @@ exports.protect = async (req, res, next) => {
     }
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+    // 3) check if user still exists
+
+    const freshUser = await User.findById(decoded.id);
+    if (!freshUser) {
+      throw new Error("Token user doesn't exist");
+    }
+
+    // 4) check if user changed password after the token was issued
+
+    if (freshUser.changedPasswordAfter(decoded.iat)) {
+      throw new Error('Password has been changed. Relog in');
+    }
+    req.user = freshUser;
     req.body.userid = decoded.id;
     next();
   } catch (err) {
@@ -85,3 +102,52 @@ exports.protect = async (req, res, next) => {
     });
   }
 };
+
+exports.restrictTo = function (...roles) {
+  return (req, res, next) => {
+    try {
+      if (!roles.includes(req.user.role)) {
+        throw new Error('no permission to perform this action');
+      }
+      next();
+    } catch (err) {
+      res.status(403).json({
+        status: 'fail',
+        message: err.message,
+      });
+    }
+  };
+};
+
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    console.log(req.body.email);
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      throw new Error('user not found');
+    }
+
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetURL = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+    const message = 'submit a new password';
+
+    // await sendEmail({});
+
+    res.status(200).json({
+      status: 'success',
+      data: { resetToken },
+      resetURL,
+      message,
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'fail',
+      message: err.message,
+    });
+  }
+};
+exports.resetPassword = (req, res, next) => {};

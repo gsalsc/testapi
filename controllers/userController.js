@@ -1,5 +1,5 @@
 const User = require('../models/userModel');
-const ApiFeatures = require('../utils/apiFeature');
+const ApiFeatures = require('../services/apiFeature');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -68,9 +68,17 @@ exports.updateUser = (req, res) => {
   });
 };
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'success',
-    message: 'route not defined',
-  });
+exports.deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.status(204).json({
+      status: 'success',
+      data: null,
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err,
+    });
+  }
 };
