@@ -4,117 +4,117 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 // const sendEmail = require('../services/email');
 
-const cookieOptions = {
-  expires: new Date(
-    Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-  ),
-  // secure: true,
-  httpOnly: true,
-};
-const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+// const cookieOptions = {
+//   expires: new Date(
+//     Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+//   ),
+//   // secure: true,
+//   httpOnly: true,
+// };
+// const signToken = (id) =>
+//   jwt.sign({ id }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN,
+//   });
 
-exports.signup = async (req, res, next) => {
-  try {
-    const newUser = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      photo: req.body.photo,
-      role: req.body.role,
-      password: req.body.password,
-      passwordConfirm: req.body.passwordConfirm,
-      passwordChangedAt: req.body.passwordChangedAt,
-    });
+// exports.signup = async (req, res, next) => {
+//   try {
+//     const newUser = await User.create({
+//       name: req.body.name,
+//       email: req.body.email,
+//       photo: req.body.photo,
+//       role: req.body.role,
+//       password: req.body.password,
+//       passwordConfirm: req.body.passwordConfirm,
+//       passwordChangedAt: req.body.passwordChangedAt,
+//     });
 
-    const token = signToken(newUser._id);
+//     const token = signToken(newUser._id);
 
-    newUser.password = undefined;
+//     newUser.password = undefined;
 
-    res.cookie('AccessToken', token, cookieOptions);
-    res.cookie('Test', token, cookieOptions);
+//     res.cookie('AccessToken', token, cookieOptions);
+//     res.cookie('Test', token, cookieOptions);
 
-    res.status(201).json({
-      status: 'success',
-      token,
-      data: {
-        user: newUser,
-      },
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: 'fail',
-      message: err.message,
-    });
-  }
-};
+//     res.status(201).json({
+//       status: 'success',
+//       token,
+//       data: {
+//         user: newUser,
+//       },
+//     });
+//   } catch (err) {
+//     res.status(400).json({
+//       status: 'fail',
+//       message: err.message,
+//     });
+//   }
+// };
 
-exports.login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      throw new Error('please provide password and email');
-    }
+// exports.login = async (req, res, next) => {
+//   try {
+//     const { email, password } = req.body;
+//     if (!email || !password) {
+//       throw new Error('please provide password and email');
+//     }
 
-    const user = await User.findOne({ email }).select('+password');
+//     const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      throw new Error('data is incorrect');
-    }
+//     if (!user || !(await user.correctPassword(password, user.password))) {
+//       throw new Error('data is incorrect');
+//     }
 
-    const token = signToken(user._id);
-    res.status(200).json({
-      status: 'success',
-      email,
-      token,
-    });
-  } catch (err) {
-    res.status(401).json({
-      status: 'fail',
-      message: err.message,
-    });
-  }
-};
+//     const token = signToken(user._id);
+//     res.status(200).json({
+//       status: 'success',
+//       email,
+//       token,
+//     });
+//   } catch (err) {
+//     res.status(401).json({
+//       status: 'fail',
+//       message: err.message,
+//     });
+//   }
+// };
 
-exports.protect = async (req, res, next) => {
-  try {
-    let token;
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer ')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+// exports.protect = async (req, res, next) => {
+//   try {
+//     let token;
+//     if (
+//       req.headers.authorization &&
+//       req.headers.authorization.startsWith('Bearer ')
+//     ) {
+//       token = req.headers.authorization.split(' ')[1];
+//     }
 
-    if (!token) {
-      throw new Error('not authorized');
-    }
+//     if (!token) {
+//       throw new Error('not authorized');
+//     }
 
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+//     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    // 3) check if user still exists
+//     // 3) check if user still exists
 
-    const freshUser = await User.findById(decoded.id);
-    if (!freshUser) {
-      throw new Error("Token user doesn't exist");
-    }
+//     const freshUser = await User.findById(decoded.id);
+//     if (!freshUser) {
+//       throw new Error("Token user doesn't exist");
+//     }
 
-    // 4) check if user changed password after the token was issued
+//     // 4) check if user changed password after the token was issued
 
-    if (freshUser.changedPasswordAfter(decoded.iat)) {
-      throw new Error('Password has been changed. Relog in');
-    }
-    req.user = freshUser;
-    req.body.userid = decoded.id;
-    next();
-  } catch (err) {
-    res.status(401).json({
-      status: 'fail',
-      message: err.message,
-    });
-  }
-};
+//     if (freshUser.changedPasswordAfter(decoded.iat)) {
+//       throw new Error('Password has been changed. Relog in');
+//     }
+//     req.user = freshUser;
+//     req.body.userid = decoded.id;
+//     next();
+//   } catch (err) {
+//     res.status(401).json({
+//       status: 'fail',
+//       message: err.message,
+//     });
+//   }
+// };
 
 exports.restrictTo = function (...roles) {
   return (req, res, next) => {

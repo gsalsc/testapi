@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
@@ -43,6 +44,8 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  userRefreshToken: String,
+  refreshTokenExpires: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -52,7 +55,6 @@ userSchema.pre('save', async function (next) {
   this.passwordConfirm = undefined;
   next();
 });
-
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
@@ -60,13 +62,38 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.changedPasswordAfter = function (JWTtimestamp) {
-  let changedTimestamp;
-  if (this.passwordChangedAt) {
-    changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
-    console.log(changedTimestamp, JWTtimestamp);
-  }
-  return JWTtimestamp < changedTimestamp;
+// userSchema.methods.changedPasswordAfter = function (JWTtimestamp) {
+//   let changedTimestamp;
+//   if (this.passwordChangedAt) {
+//     changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+//     // console.log(changedTimestamp, JWTtimestamp);
+//   }
+//   return JWTtimestamp < changedTimestamp;
+// };
+// userSchema.methods.createAccessToken = async function () {
+//   const accessToken = jwt.sign(
+//     { id: this._id },
+//     process.env.ACCESS_TOKEN_SECRET,
+//     { expiresIn: Date.now() + 2 * 60 * 1000 }
+//   );
+
+//   this.accessTokenExpires = Date.now() + 2 * 60 * 1000;
+//   return accessToken;
+// };
+
+userSchema.methods.createRefreshToken = async function () {
+  const refreshToken = jwt.sign(
+    { id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: 24 * 60 * 60 }
+  );
+  this.userRefreshToken = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  this.refreshTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+  return refreshToken;
 };
 
 userSchema.methods.createPasswordResetToken = function () {
