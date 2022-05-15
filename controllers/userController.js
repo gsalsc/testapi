@@ -20,9 +20,9 @@ exports.getAllUsers = async (req, res) => {
       data: { users },
     });
   } catch (err) {
-    res.status(400).json({
+    res.status(401).json({
       status: 'fail',
-      message: err,
+      message: err.message,
     });
   }
 };
@@ -50,7 +50,7 @@ exports.getMe = async (req, res) => {
       data: { user },
     });
   } catch (err) {
-    res.status(400).json({
+    res.status(401).json({
       status: 'fail',
       message: err,
     });
@@ -93,7 +93,7 @@ const cookieOptions = {
   httpOnly: true,
 };
 
-exports.signin = async (req, res, next) => {
+exports.signup = async (req, res, next) => {
   try {
     console.log('hello');
     if (process.env.NODE_ENV === 'production') delete req.body.role;
@@ -136,7 +136,7 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      throw new Error('data is incorrect');
+      throw new Error('data are incorrect');
     }
 
     const accessToken = jwt.sign(
