@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
+const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const ApiFeatures = require('../services/apiFeature');
@@ -95,7 +96,11 @@ const cookieOptions = {
 
 exports.signup = async (req, res, next) => {
   try {
-    console.log('hello');
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     if (process.env.NODE_ENV === 'production') delete req.body.role;
     const newUser = await User.create(req.body);
 
@@ -112,6 +117,9 @@ exports.signup = async (req, res, next) => {
     newUser.password = undefined;
     newUser.userRefreshToken = undefined;
     newUser.refreshTokenExpires = undefined;
+    newUser.role = undefined;
+    newUser.passwordChangedAt = undefined;
+    newUser.__v = undefined;
     res.status(201).json({
       status: 'success',
       data: {

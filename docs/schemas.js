@@ -47,5 +47,16 @@
  *          type: string
  *          description: Password conformation.
  *          example: 'password123'
+ *    inputLogin:
+ *      type: object
+ *      properties:
+ *        email:
+ *          type: string
+ *          description: The user email.
+ *          example: 'user@mail.com'
+ *        password:
+ *          type: string
+ *          description: The user password.
+ *          example: 'password123'
  *
  */

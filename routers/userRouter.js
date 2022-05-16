@@ -1,4 +1,5 @@
 const express = require('express');
+const { body } = require('express-validator');
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const authController = require('../controllers/authController');
@@ -17,7 +18,7 @@ const router = express.Router();
  *   post:
  *     tags:
  *      - Users
- *     summary: Register a new user in the database
+ *     summary: Registers a new user in the database
  *     requestBody:
  *       required: true
  *       content:
@@ -35,7 +36,7 @@ const router = express.Router();
  *         description: Returns an error message.
  *                      User validation failed error if the input data are incorrect or duplicate key error if the user has already registered.
  */
-router.post('/signup', userController.signup);
+router.post('/signup', body('email').isEmail(), userController.signup);
 //////////////////////////////////////////////
 /**
  * @openapi
@@ -44,6 +45,12 @@ router.post('/signup', userController.signup);
  *     tags:
  *      - Users
  *     summary: Provides the user with access to application resources
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/inputLogin'
  *     responses:
  *       200:
  *         description: Returns a JSON message 'success' and cookies with access and refresh tokens.
@@ -120,6 +127,14 @@ router.route('/').get(authMiddleware.protect, userController.getAllUsers);
  *     tags:
  *      - Users
  *     summary: Provides the user with the data on other user by ID
+ *     parameters:
+ *     - in: path
+ *       name: userID
+ *       required: true
+ *       schema:
+ *         type: integer
+ *         minimun: 1
+ *       description: The user ID
  *     responses:
  *       200:
  *         description: Returns a user object in a JSON message according to the supplied id.
@@ -135,6 +150,6 @@ router.route('/:id').get(authMiddleware.protect, userController.getUser);
 // .post(userController.addNewUser);
 // .get(authController.protect, userController.getAllUsers);
 // .delete(authMiddleware.protect, userController.deleteUser);
-//.patch(userController.updateUser)
+// .patch(userController.updateUser)
 
 module.exports = router;

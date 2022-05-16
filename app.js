@@ -17,7 +17,7 @@ const options = {
     },
     servers: [{ url: 'http://localhost:3000/' }],
   },
-  apis: ['./routers/*.js', './docs/schemas.js'], // files containing annotations as above
+  apis: ['./routers/*.js', './docs/schemas.js'],
 };
 
 const openapiSpecification = swaggerJsdoc(options);
